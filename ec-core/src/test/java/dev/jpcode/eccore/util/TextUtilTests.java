@@ -1,5 +1,7 @@
 package dev.jpcode.eccore.util;
 
+import net.minecraft.registry.DynamicRegistryManager;
+
 import org.junit.jupiter.api.DisplayName;
 import org.junit.jupiter.api.Test;
 
@@ -39,8 +41,8 @@ public class TextUtilTests {
     @DisplayName("from-to json is remotely sane")
     void fromToJson_isSane()
     {
-        var nullJsonStr = Text.Serialization.toJsonString(Text.literal(" hi there! "));
-        var parsedStyleFromNull = Text.Serialization.fromJson(nullJsonStr);
+        var nullJsonStr = Text.Serialization.toJsonString(Text.literal(" hi there! "), DynamicRegistryManager.EMPTY);
+        var parsedStyleFromNull = Text.Serialization.fromJson(nullJsonStr, DynamicRegistryManager.EMPTY);
 
         assert parsedStyleFromNull == null;
     }
