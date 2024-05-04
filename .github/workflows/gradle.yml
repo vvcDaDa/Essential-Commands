@@ -5,7 +5,7 @@ name: Build and Test with Gradle
 
 on:
   push:
-    branches: [ "1.18", "1.19", "1.19.*", "1.20.*" ]
+    branches: [ "1.18", "1.19", "1.19.*", "1.20.*", "pipeline-*" ]
     paths:
       - '**/src/**'
       - '**/build.gradle'
@@ -15,7 +15,7 @@ on:
       - LICENCE
 
   pull_request:
-    branches: [ "1.18", "1.19", "1.19.*", "1.20.*" ]
+    branches: [ "1.18", "1.19", "1.19.*", "1.20.*", "pipeline-*" ]
     paths:
       - '**/src/**'
       - '**/build.gradle'
@@ -58,11 +58,16 @@ jobs:
           IS_PIPELINE: true
         run: gradle clean build
 
+      - name: Move artifacts
+        run: |
+          mkdir -p ~/.artifacts
+          find . -path '**/build/libs/*.jar' | xargs -I '{}' mv {} ~/.artifacts
+
       - name: 📦 Upload artifacts
         uses: actions/upload-artifact@v2
         with:
           name: artifacts
-          path: '**/build/libs/'
+          path: '~/.artifacts'
 
       - name: 📝 Upload reports
         if: ${{ always() }}

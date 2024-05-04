@@ -274,11 +274,11 @@ task publishGithubRelease (type: GithubReleaseTask){
     group 'upload'
 
     onlyIf {
-        env.containsKey("GITHUB")
+        env.containsKey("GITHUB_TOKEN")
     }
 }
 githubRelease {
-    token = getenv("GITHUB") // This is your personal access token with Repo permissions
+    token = getenv("GITHUB_TOKEN") // This is your personal access token with Repo permissions
     // You get this from your user settings > developer settings > Personal Access Tokens
     owner = project.gh_owner // default is the last part of your group. Eg group: "com.github.breadmoirai" => owner: "breadmoirai"
     repo = project.gh_repo // by default this is set to your project name
