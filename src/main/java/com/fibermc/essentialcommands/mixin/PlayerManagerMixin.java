@@ -7,6 +7,8 @@ import com.fibermc.essentialcommands.events.PlayerConnectCallback;
 import com.fibermc.essentialcommands.events.PlayerLeaveCallback;
 import com.fibermc.essentialcommands.events.PlayerRespawnCallback;
 import com.fibermc.essentialcommands.playerdata.PlayerDataManager;
+import com.llamalad7.mixinextras.sugar.Local;
+import com.llamalad7.mixinextras.sugar.ref.LocalRef;
 import io.github.ladysnake.pal.Pal;
 import io.github.ladysnake.pal.VanillaAbilities;
 import org.spongepowered.asm.mixin.Mixin;
@@ -21,6 +23,7 @@ import net.minecraft.server.PlayerManager;
 import net.minecraft.server.network.ServerPlayerEntity;
 import net.minecraft.server.world.ServerWorld;
 import net.minecraft.util.math.BlockPos;
+import net.minecraft.util.math.Vec3d;
 
 @Mixin(PlayerManager.class)
 public abstract class PlayerManagerMixin {
@@ -69,20 +72,37 @@ public abstract class PlayerManagerMixin {
     @SuppressWarnings({"checkstyle:NoWhitespaceBefore", "checkstyle:MethodName"})
     @Inject(method = "respawnPlayer", at = @At(
         value = "INVOKE",
+        // This target lets us modify respawn position and dimension (player maybe not _fully_ initialized, still)
+        target = "Lnet/minecraft/server/network/ServerPlayerEntity;<init>(Lnet/minecraft/server/MinecraftServer;Lnet/minecraft/server/world/ServerWorld;Lcom/mojang/authlib/GameProfile;)V"
+    ))
+    public void onRespawnPlayer_forResawnLocationOverwrite(
+        CallbackInfoReturnable<ServerPlayerEntity> cir
+        , @Local(ordinal = 0) ServerPlayerEntity oldServerPlayerEntity
+        , @Local(ordinal = 0) LocalRef<BlockPos> playerSpawnpointBlockPos
+        , @Local(ordinal = 0) LocalRef<Optional<Vec3d>> respawnPosition
+        , @Local(ordinal = 1) LocalRef<ServerWorld> serverWorld2
+    ) {
+        PlayerDataManager.handleRespawnAtEcSpawn(oldServerPlayerEntity, (spawnLoc) -> {
+            respawnPosition.set(Optional.of(spawnLoc.pos()));
+            serverWorld2.set(oldServerPlayerEntity.getServer().getWorld(spawnLoc.dim()));
+            playerSpawnpointBlockPos.set(new BlockPos(spawnLoc.intPos()));
+        });
+    }
+
+    @SuppressWarnings({"checkstyle:NoWhitespaceBefore", "checkstyle:MethodName"})
+    @Inject(method = "respawnPlayer", at = @At(
+        value = "INVOKE",
         // This target lets us modify respawn position
         target = "Lnet/minecraft/world/World;getLevelProperties()Lnet/minecraft/world/WorldProperties;"
-    ), locals = LocalCapture.CAPTURE_FAILHARD)
+    ))
     public void onRespawnPlayer_afterSetPosition(
-        ServerPlayerEntity oldServerPlayerEntity, boolean alive, CallbackInfoReturnable<ServerPlayerEntity> cir
-        , BlockPos blockPos
-        , float f
-        , boolean bl
-        , ServerWorld serverWorld
-        , Optional optional
-        , ServerWorld serverWorld2
-        , ServerPlayerEntity serverPlayerEntity
+        CallbackInfoReturnable<ServerPlayerEntity> cir
+        , @Local(ordinal = 0) ServerPlayerEntity oldServerPlayerEntity
+        , @Local(ordinal = 1) ServerPlayerEntity serverPlayerEntity
     ) {
-        PlayerDataManager.handleRespawnAtEcSpawn(oldServerPlayerEntity, serverPlayerEntity);
+        PlayerDataManager.handleRespawnAtEcSpawn(oldServerPlayerEntity, (spawnLoc) -> {
+            serverPlayerEntity.setServerWorld(serverPlayerEntity.getServer().getWorld(spawnLoc.dim()));
+        });
         PlayerRespawnCallback.EVENT.invoker().onPlayerRespawn(oldServerPlayerEntity, serverPlayerEntity);
     }
 }

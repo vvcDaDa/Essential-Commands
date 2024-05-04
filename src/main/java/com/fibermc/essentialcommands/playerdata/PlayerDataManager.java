@@ -182,7 +182,10 @@ public class PlayerDataManager {
         newPlayerAccess.ec$setProfile(profile);
     }
 
-    public static void handleRespawnAtEcSpawn(ServerPlayerEntity oldPlayerEntity, ServerPlayerEntity newPlayerEntity) {
+    public static void handleRespawnAtEcSpawn(
+        ServerPlayerEntity oldPlayerEntity,
+        Consumer<MinecraftLocation> onOverwriteSpawn
+    ) {
         var worldMgr = ManagerLocator.getInstance().getWorldDataManager();
         var spawnLocOpt = worldMgr.getSpawn();
         if (spawnLocOpt.isEmpty()) {
@@ -197,7 +200,7 @@ public class PlayerDataManager {
             }
 
             private boolean hasNoBed() {
-                var vanillaPlayerSpawnPoint = newPlayerEntity.getSpawnPointPosition();
+                var vanillaPlayerSpawnPoint = oldPlayerEntity.getSpawnPointPosition();
                 return vanillaPlayerSpawnPoint == null;
             }
 
@@ -216,8 +219,7 @@ public class PlayerDataManager {
             // respawn at spawn loc
             // This event handler executes just before the player is truly respawned, so we can just
             // modify the entity's location to achieve this.
-            newPlayerEntity.setPosition(spawnLoc.pos());
-            newPlayerEntity.setServerWorld(newPlayerEntity.getServer().getWorld(spawnLoc.dim()));
+            onOverwriteSpawn.accept(spawnLoc);
         }
     }
 
