@@ -18,12 +18,15 @@ import org.spongepowered.asm.mixin.injection.callback.CallbackInfo;
 import org.spongepowered.asm.mixin.injection.callback.CallbackInfoReturnable;
 import org.spongepowered.asm.mixin.injection.callback.LocalCapture;
 
+import net.minecraft.entity.Entity;
 import net.minecraft.entity.damage.DamageSource;
 import net.minecraft.registry.RegistryKey;
+import net.minecraft.server.PlayerManager;
 import net.minecraft.server.network.ServerPlayerEntity;
 import net.minecraft.server.world.ServerWorld;
 import net.minecraft.text.Text;
 import net.minecraft.world.GameMode;
+import net.minecraft.world.TeleportTarget;
 import net.minecraft.world.World;
 import net.minecraft.world.WorldProperties;
 
@@ -60,14 +63,18 @@ public abstract class ServerPlayerEntityMixin extends PlayerEntityMixin implemen
 //        ((ServerPlayerEntityAccess) this).getEcPlayerData().updatePlayer(((ServerPlayerEntity) (Object) this));
     }
 
-    @Inject(method = "teleport(Lnet/minecraft/server/world/ServerWorld;DDDFF)V", at = @At(
+    @Inject(method = "teleportTo(Lnet/minecraft/world/TeleportTarget;)Lnet/minecraft/entity/Entity;", at = @At(
         value = "INVOKE",
         target = "Lnet/minecraft/server/PlayerManager;sendPlayerStatus(Lnet/minecraft/server/network/ServerPlayerEntity;)V"
     ), locals = LocalCapture.CAPTURE_FAILSOFT)
     public void onTeleportBetweenWorlds(
-        ServerWorld targetWorld, double x, double y, double z, float yaw, float pitch,
-        CallbackInfo ci,
-        ServerWorld serverWorld, WorldProperties worldProperties)
+        TeleportTarget teleportTarget,
+        CallbackInfoReturnable<Entity> cir,
+        ServerWorld serverWorld,
+        ServerWorld serverWorld2,
+        RegistryKey<World> registryKey,
+        WorldProperties worldProperties,
+        PlayerManager playerManager)
     {
         var playerData = ((ServerPlayerEntityAccess) this).ec$getPlayerData();
         playerData.updatePlayerEntity((ServerPlayerEntity) (Object) this);

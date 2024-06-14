@@ -136,17 +136,17 @@ public final class EssentialCommandsConfig extends Config<EssentialCommandsConfi
                 EssentialCommands.LOGGER.info("Possible world ids: {}", String.join(",", worldIds.stream().map(Identifier::toString).toList()));
 
                 var configuredWorldIds = configuredWorldIdStrings.stream()
-                    .map(Identifier::new)
+                    .map(Identifier::of)
                     .toList();
                 EssentialCommands.LOGGER.info("Configured `rtp_enabled_worlds` world ids: {}", String.join(",", configuredWorldIds.stream().map(Identifier::toString).toList()));
 
                 var validConfiguredWorldIds = configuredWorldIdStrings.stream()
-                    .map(Identifier::new)
+                    .map(Identifier::of)
                     .filter(worldIds::contains)
                     .collect(Collectors.toSet());
 
                 var invalidConfiguredWorldIds = configuredWorldIdStrings.stream()
-                    .map(Identifier::new)
+                    .map(Identifier::of)
                     .filter(v -> !worldIds.contains(v))
                     .toList();
 
